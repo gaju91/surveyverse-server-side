@@ -1,0 +1,9 @@
+{
+    "server": "Internal Server Error",
+    "noData": "No data found",
+    "jwt": "JWT Authentication",
+    "invalidData": "Invalid Data",
+    "db": "Database Error",
+    "sms":"SMS",
+    "access": "Access Permission Error"
+}
