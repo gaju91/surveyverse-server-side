@@ -1,27 +1,32 @@
-const utility = function() {
+const utility = function () {
 
 }
 const response = require('./response');
 const error = require('./error');
+const errorMessage = require('./errorMessage.json');
+const errorCode = require('./errorCode.json');
 
 
-utility.prototype.checkResult = (data) => {
+utility.prototype.checkResult = (arrResponseRows) => {
 
-    let output = { isError: false, isCustomException: false, result: data }
+    let output = { isError: false, isCustomException: false, result: arrResponseRows }
 
-    if (data.length > 1) output = {...output, result: data }
-    else if (data.length == 0) { output = {...output, result: data } } else if (data.length == 1) {
-        if ('isexecuted' in data[0] || 'errorcode' in data[0]) {
-            if (data[0].errorcode === "E0000") output = {...output, result: data }
+    if (arrResponseRows.length > 1) output = { ...output, result: arrResponseRows }
+    else if (arrResponseRows.length == 0) {
+        output = { ...output, result: arrResponseRows }
+    }
+    else if (arrResponseRows.length == 1) {
+        if ('isexecuted' in arrResponseRows[0] || 'errorcode' in arrResponseRows[0]) {
+            if (arrResponseRows[0].errorcode === "E0000") output = { ...output, result: arrResponseRows }
             else {
-                if (!data[0].errormsg || data[0].errormsg == "") {
-                    output = {...output, isError: true }
+                if (!arrResponseRows[0].errormsg || arrResponseRows[0].errormsg == "") {
+                    output = { ...output, isError: true }
                 } else {
-                    output = {...output, isError: true, isCustomException: true }
+                    output = { ...output, isError: true, isCustomException: true }
                 }
             }
         } else {
-            output = {...output, result: data }
+            output = { ...output, result: arrResponseRows }
         }
     }
     return output;
@@ -45,24 +50,25 @@ utility.prototype.throwerror = (error, res) => {
             } else {
                 isCustomException = true;
             }
-            let errorMessage = isCustomException ? error.errormsg : errorMessage[error.errorcode]
-            res.status(500).json(new response(new error(errorCode.db, errorMessage, error.errorcode, error), null));
+            let errorMsg = isCustomException ? error.errormsg : errorMessage[error.errorcode]
+            res.status(500).json(new response(new error(errorCode.db, errorMsg, error.errorcode, error), null));
         } else {
             res.status(500).json(new response(new error(errorCode.server, errorMessage['1'], 1, error), null));
         }
     } else {
-        res.status(500).json(new response(new commonController.error(errorCode.db, error.errormsg || errorMessage['E1240'], 'E1240', error), null));
+        res.status(500).json(new response(new error(errorCode.db, error.errormsg || errorMessage['E1240'], 'E1240', error), null));
     }
     throw new Error(error);
 }
 
-utility.prototype.getfinalresult = (error, result, req, res) => {
-    let finalResult = utility.prototype.checkResult(result.rows, req._startTime, req.originalUrl, req.method, req.hostname);
+utility.prototype.getfinalresult = (err, result, req, res) => {
+    let finalResult = utility.prototype.checkResult(result.rows);
     if (!finalResult.isError) {
         res.status(200).json(new response(null, finalResult.result));
     } else {
-        let errorMessage = finalResult.isCustomException ? finalResult.result[0].errormsg : commonController.errorMessage[finalResult.result[0].errorcode]
-        res.status(500).json(new response(new error(commonController.errorCode.db, errorMessage, finalResult.result[0].errorcode, error), null));
+        let errorMsg = finalResult.isCustomException ? 
+        finalResult.result[0].errormsg : errorMessage[finalResult.result[0].errorcode]
+        res.status(500).json(new response(new error(errorCode.db, errorMsg, finalResult.result[0].errorcode, err), null));
     }
 }
 
