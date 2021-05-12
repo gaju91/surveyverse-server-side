@@ -18,7 +18,8 @@ let Strategy = new authStrategy(
         clientSecret : require('../config/keyController').clientSecret,
         callbackURL: '/auth/google/callback',
         accessType: 'offline',
-        prompt: 'consent'
+        prompt: 'consent',
+        proxy : true
     },
     (accessToken, refreshToken, profile, done) => {
         userModel.findOne({ authid: profile.id })
